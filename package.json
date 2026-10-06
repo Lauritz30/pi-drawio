@@ -1,0 +1,7 @@
+{
+  "name": "pi-drawio",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "A local draw.io extension for the Pi coding agent — create and edit diagrams without an MCP server."
+}
