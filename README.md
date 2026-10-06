@@ -19,7 +19,8 @@ keyword + a `pi` manifest in `package.json`), publishable to npm.
   color, and nodes inherit their lane's color — so "who does what" is visible.
 - **PNG/SVG/PDF export** via the draw.io desktop CLI (XML embedded, so exports
   stay editable), plus a read-back loop: export → `read` the image → fix issues.
-- **Open** diagrams in the draw.io desktop app.
+- **Open** diagrams in the draw.io desktop app, with automatic fallback to the
+  browser (draw.io web editor) when the desktop app is not installed.
 
 ## Install
 
@@ -62,7 +63,8 @@ Restart Pi (or run `/reload`).
 - **draw.io desktop app** ([diagrams.net](https://www.diagrams.net)) — optional;
   enables PNG/SVG/PDF export and ELK/`libavoid` layout. Auto-detected on macOS
   at `/Applications/draw.io.app/Contents/MacOS/draw.io`; override with
-  `DRAWIO_PATH`.
+  `DRAWIO_PATH`. When it is not installed, opening a diagram falls back to the
+  draw.io web editor in the browser.
 - Pi host packages (`@earendil-works/pi-coding-agent`, `@earendil-works/pi-ai`)
   are declared as `peerDependencies` and provided by Pi itself.
 
@@ -77,7 +79,7 @@ Restart Pi (or run `/reload`).
 | `drawio_list_cells` | List cells (id, kind, label, parent, geometry, style) |
 | `drawio_read_xml` / `drawio_write_xml` | Raw XML escape hatch |
 | `drawio_export` | PNG/SVG/PDF via desktop CLI |
-| `drawio_open` | Open a file in the draw.io desktop app |
+| `drawio_open` | Open a .drawio in the desktop app (browser fallback) |
 | `drawio_layout` | Re-run layout (`layered`, `elk:*`, `libavoid`) |
 | `drawio_status` | CLI availability + shape/color palette |
 

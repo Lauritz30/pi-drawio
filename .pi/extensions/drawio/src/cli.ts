@@ -3,7 +3,8 @@
 
 import { execFile, spawn } from "node:child_process";
 import { promisify } from "node:util";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { deflateRawSync } from "node:zlib";
 import path from "node:path";
 import type { ExportFormat } from "./types.ts";
 
@@ -101,7 +102,7 @@ export async function applyLayout(inputAbs: string, layout: string): Promise<voi
   }
 }
 
-/** Open a file in the OS default handler / draw.io desktop app. */
+/** Open a path (file or URL) in the OS default handler. */
 export function openPath(p: string): void {
   if (process.platform === "darwin") {
     spawn("open", [p], { detached: true, stdio: "ignore" }).unref();
@@ -110,6 +111,37 @@ export function openPath(p: string): void {
   } else {
     spawn("xdg-open", [p], { detached: true, stdio: "ignore" }).unref();
   }
+}
+
+/**
+ * Build a draw.io web editor URL that opens the given diagram XML directly.
+ * Uses the same `#R` encoding as draw.io's own "Publish > Link" URLs:
+ * URL-encode → raw DEFLATE → base64, then URL-encode the result.
+ */
+export function drawioBrowserUrl(xml: string): string {
+  const deflated = deflateRawSync(Buffer.from(encodeURIComponent(xml), "utf8"));
+  return "https://app.diagrams.net/#R" + encodeURIComponent(deflated.toString("base64"));
+}
+
+/** Open a .drawio file in the browser via the draw.io web editor. */
+export function openDiagramInBrowser(p: string): void {
+  openPath(drawioBrowserUrl(readFileSync(p, "utf8")));
+}
+
+/**
+ * Open a .drawio file in the installed draw.io desktop app; if the app is not
+ * installed, fall back to the browser. Returns how it was opened.
+ */
+export function openDiagramInEditor(p: string): "desktop" | "browser" {
+  const bin = findDrawioSync();
+  if (!bin) {
+    openDiagramInBrowser(p);
+    return "browser";
+  }
+  const child = spawn(bin, [p], { detached: true, stdio: "ignore" });
+  child.on("error", () => {}); // ignore launch errors; the file stays on disk
+  child.unref();
+  return "desktop";
 }
 
 export function drawioAvailable(): boolean {

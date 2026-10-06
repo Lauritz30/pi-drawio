@@ -9,7 +9,7 @@ import { parseDiagram, validateXml } from "./parse.ts";
 import { applyLayeredLayout } from "./layout.ts";
 import { resolveShape, withColor, swimlaneStyle, edgeStyle, isSwimlane } from "./styles.ts";
 import { roleColor, colorByIndex, assignRoleColors, parseColor, DEFAULT_COLOR, type RoleColor } from "./colors.ts";
-import { findDrawioSync, exportDiagram, applyLayout, openPath, drawioAvailable } from "./cli.ts";
+import { findDrawioSync, exportDiagram, applyLayout, openPath, openDiagramInEditor, drawioAvailable } from "./cli.ts";
 
 export function resolvePath(cwd: string, p: string): string {
   return isAbsolute(p) ? p : resolve(cwd, p);
@@ -223,6 +223,8 @@ export interface CreateOptions extends Spec {
 export interface CreateResult {
   path: string;
   exported?: string;
+  /** How the diagram was opened: desktop app or browser (undefined if open:false). */
+  opened?: "desktop" | "browser";
   nodes: number;
   edges: number;
   lanes: number;
@@ -267,14 +269,16 @@ export async function createDiagram(opts: CreateOptions): Promise<CreateResult> 
     exported = await exportDiagram(abs, opts.exportFormat, { border: opts.border, scale: opts.scale });
   }
 
+  let opened: "desktop" | "browser" | undefined;
   if (opts.open !== false) {
-    openPath(abs);
+    opened = openDiagramInEditor(abs);
     if (exported) openPath(exported);
   }
 
   return {
     path: abs,
     exported,
+    opened,
     nodes: built.nodes.length,
     edges: built.edges.length,
     lanes: built.lanes.length,
@@ -290,7 +294,7 @@ export interface AddOptions extends Spec {
   open?: boolean;
 }
 
-export async function addCells(opts: AddOptions): Promise<{ path: string; nodes: number; edges: number; lanes: number }> {
+export async function addCells(opts: AddOptions): Promise<{ path: string; nodes: number; edges: number; lanes: number; opened?: "desktop" | "browser" }> {
   const abs = resolvePath(opts.cwd, opts.path);
   if (!existsSync(abs)) {
     throw new Error(`No diagram at ${abs}. Use drawio_create_diagram first.`);
@@ -311,9 +315,10 @@ export async function addCells(opts: AddOptions): Promise<{ path: string; nodes:
     await applyLayout(abs, preset);
   }
 
-  if (opts.open !== false) openPath(abs);
+  let opened: "desktop" | "browser" | undefined;
+  if (opts.open !== false) opened = openDiagramInEditor(abs);
 
-  return { path: abs, nodes: built.nodes.length, edges: built.edges.length, lanes: built.lanes.length };
+  return { path: abs, nodes: built.nodes.length, edges: built.edges.length, lanes: built.lanes.length, opened };
 }
 
 export interface UpdateCellSpec {
@@ -467,11 +472,11 @@ export async function exportDiagramOp(opts: {
   return { path: abs, output };
 }
 
-export function openDiagram(opts: { cwd: string; path: string }): { path: string } {
+export function openDiagram(opts: { cwd: string; path: string }): { path: string; opened: "desktop" | "browser" } {
   const abs = resolvePath(opts.cwd, opts.path);
   if (!existsSync(abs)) throw new Error(`Diagram not found: ${abs}`);
-  openPath(abs);
-  return { path: abs };
+  const opened = openDiagramInEditor(abs);
+  return { path: abs, opened };
 }
 
 export async function layoutDiagram(opts: { cwd: string; path: string; layout: string }): Promise<{ path: string; layout: string }> {

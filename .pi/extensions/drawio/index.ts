@@ -97,7 +97,8 @@ const createTool = defineTool({
     "Use lanes[] to make swimlanes (one lane per role/actor). Assign each node a `lane` (id or name) and optionally a `role`. " +
     "Roles and lanes are auto-colored: one role = one color, each lane gets a distinct color. " +
     "Nodes reference edges via their id (give nodes stable ids). " +
-    "After creation the file is opened in draw.io; if `exportFormat` is set, a PNG/SVG/PDF is also produced and you SHOULD read it back (via the read tool) to visually verify the layout.",
+    "After creation the file is opened in the draw.io desktop app (or in the browser if the app is not installed); " +
+    "if `exportFormat` is set, a PNG/SVG/PDF is also produced and you SHOULD read it back (via the read tool) to visually verify the layout.",
   parameters: Type.Object({
     path: Type.String({ description: "Output file path, e.g. 'diagrams/login-flow.drawio'." }),
     title: Type.Optional(Type.String({ description: "Diagram/page title." })),
@@ -130,6 +131,7 @@ const createTool = defineTool({
       `Created ${r.nodes} node(s), ${r.edges} edge(s), ${r.lanes} lane(s).`,
       `File: ${r.path}`,
     ];
+    if (r.opened) lines.push(`Opened in ${r.opened === "desktop" ? "the draw.io desktop app" : "the browser (draw.io web editor)"}.`);
     if (r.exported) lines.push(`Exported: ${r.exported} — read it back to verify the layout.`);
     if (!r.drawioCli) lines.push("draw.io desktop CLI not detected; PNG/SVG/PDF export and ELK layout are unavailable.");
     return textResult(lines.join("\n"), r);
@@ -162,7 +164,8 @@ const addTool = defineTool({
       layout: params.layout,
       open: params.open,
     });
-    return textResult(`Added ${r.nodes} node(s), ${r.edges} edge(s), ${r.lanes} lane(s). File: ${r.path}`, r);
+    const where = r.opened ? ` Opened in ${r.opened === "desktop" ? "the draw.io desktop app" : "the browser (draw.io web editor)"}.` : "";
+    return textResult(`Added ${r.nodes} node(s), ${r.edges} edge(s), ${r.lanes} lane(s). File: ${r.path}.${where}`, r);
   },
 });
 
@@ -287,13 +290,13 @@ const exportTool = defineTool({
 const openTool = defineTool({
   name: "drawio_open",
   label: "Open diagram in draw.io",
-  description: "Open a .drawio file (or exported image) in the draw.io desktop app / default handler.",
+  description: "Open a .drawio file in the draw.io desktop app, falling back to the browser (draw.io web editor) if the desktop app is not installed.",
   parameters: Type.Object({
     path: Type.String({ description: "Path to the file to open." }),
   }),
   async execute(_id, params, _signal, _onUpdate, ctx) {
     const r = openDiagram({ cwd: ctx.cwd, path: params.path });
-    return textResult(`Opened ${r.path}`, r);
+    return textResult(`Opened ${r.path} in ${r.opened === "desktop" ? "the draw.io desktop app" : "the browser (draw.io web editor)"}.`, r);
   },
 });
 
@@ -367,8 +370,8 @@ export default function drawioExtension(pi: ExtensionAPI) {
           return;
         }
         if (sub === "open") {
-          openDiagram({ cwd: ctx.cwd, path: file });
-          ctx.ui.notify(`Opened ${file}`, "info");
+          const r = openDiagram({ cwd: ctx.cwd, path: file });
+          ctx.ui.notify(`Opened ${file} in ${r.opened === "desktop" ? "draw.io desktop" : "the browser"}`, "info");
         } else if (sub === "export") {
           const format = (rest[1] as "png" | "svg" | "pdf") ?? "png";
           const r = await exportDiagramOp({ cwd: ctx.cwd, path: file, format });

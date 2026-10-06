@@ -2,3 +2,4 @@ node_modules/
 *.drawio.png
 *.drawio.svg
 *.drawio.pdf
+graph-out/

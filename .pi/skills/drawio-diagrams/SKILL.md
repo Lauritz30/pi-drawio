@@ -20,7 +20,7 @@ especially the coloring rules for roles and swimlanes.
 | Remove cells | `drawio_delete_cells` |
 | See what is in a diagram | `drawio_list_cells` |
 | Export PNG/SVG/PDF | `drawio_export` |
-| Open in the draw.io desktop app | `drawio_open` |
+| Open the .drawio (desktop app, browser fallback) | `drawio_open` |
 | Re-run auto-layout | `drawio_layout` |
 | Check CLI availability + palette | `drawio_status` |
 
@@ -135,9 +135,12 @@ No lanes, free-form boxes:
 
 ## Notes and limits
 
-- Files are native `.drawio` (mxGraphModel XML); they open directly in draw.io.
+- Files are native `.drawio` (mxGraphModel XML); they open directly in the
+  draw.io desktop app, or in the browser (draw.io web editor) if the app is not
+  installed.
 - PNG/SVG/PDF export and ELK layout require the draw.io **desktop** app
-  (`drawio` CLI). Without it you can still create/edit/open `.drawio` files.
+  (`drawio` CLI). Without it you can still create/edit/open `.drawio` files
+  (opening falls back to the browser).
 - Multi-page diagrams and custom shape libraries (AWS/Azure icons) are not yet
   supported; single page only for now.
 - Match the diagram's label language to the user's language.
