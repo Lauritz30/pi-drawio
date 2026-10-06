@@ -26,7 +26,7 @@ keyword + a `pi` manifest in `package.json`), publishable to npm.
 ### From npm (after publishing)
 
 ```bash
-pi install npm:pi-drawio
+pi install npm:@lauritz30/pi-drawio
 ```
 
 This installs the extension and its coloring skill as one unit, together with
