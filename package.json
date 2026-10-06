@@ -1,7 +1,58 @@
 {
   "name": "pi-drawio",
-  "private": true,
-  "version": "1.0.0",
+  "version": "0.1.0",
+  "description": "Local draw.io extension for the Pi coding agent — create and edit diagrams without an MCP server.",
   "type": "module",
-  "description": "A local draw.io extension for the Pi coding agent — create and edit diagrams without an MCP server."
+  "keywords": [
+    "pi-package",
+    "pi-extension",
+    "drawio",
+    "draw.io",
+    "diagrams",
+    "diagram",
+    "flowchart",
+    "swimlane",
+    "mxgraph"
+  ],
+  "license": "MIT",
+  "author": "Lauritz30",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Lauritz30/pi-drawio.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Lauritz30/pi-drawio/issues"
+  },
+  "homepage": "https://github.com/Lauritz30/pi-drawio#readme",
+  "files": [
+    ".pi",
+    "README.md",
+    "LICENSE"
+  ],
+  "dependencies": {
+    "fast-xml-parser": "^4.5.3"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-ai": "*"
+  },
+  "peerDependenciesMeta": {
+    "@earendil-works/pi-coding-agent": {
+      "optional": true
+    },
+    "@earendil-works/pi-ai": {
+      "optional": true
+    }
+  },
+  "pi": {
+    "extensions": [
+      "./.pi/extensions/drawio/index.ts"
+    ],
+    "skills": [
+      "./.pi/skills"
+    ]
+  },
+  "scripts": {
+    "test": "node test/smoke.ts"
+  }
 }

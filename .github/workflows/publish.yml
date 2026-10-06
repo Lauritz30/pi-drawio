@@ -1,0 +1,43 @@
+name: Publish to npm
+
+# Publishes on GitHub release (or manual dispatch) using npm Trusted
+# Publishing: the workflow needs NO npm token. npm verifies the GitHub OIDC
+# identity (the `id-token: write` permission below) against the "Trusted
+# Publishing" entry you configure on npmjs.com for this repo.
+#
+# One-time setup on npmjs.com:
+#   Package > Settings > Publishing access
+#   - Enable "Require two-factor authentication or automation"
+#   - Under "Trusted Publishing" add: owner=Lauritz30, repo=pi-drawio,
+#     workflow=this file path, environment=(leave default)
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Publish
+        run: npm publish --provenance --access public

@@ -6,6 +6,9 @@ edit native `.drawio` diagrams **without an MCP server** — it builds the
 mxGraphModel XML directly and optionally uses the draw.io desktop CLI for
 auto-layout and PNG/SVG/PDF export.
 
+Distributed as a [Pi package](https://pi.dev/packages) (the `pi-package`
+keyword + a `pi` manifest in `package.json`), publishable to npm.
+
 ## What it does
 
 - **Creates/edits `.drawio` files** (flowcharts, process flows with swimlanes,
@@ -18,38 +21,31 @@ auto-layout and PNG/SVG/PDF export.
   stay editable), plus a read-back loop: export → `read` the image → fix issues.
 - **Open** diagrams in the draw.io desktop app.
 
-## Layout
-
-```
-pi-drawio/
-├── .pi/
-│   ├── extensions/drawio/        # the extension (auto-loads in this repo)
-│   │   ├── index.ts              # registers tools + /drawio command
-│   │   ├── package.json          # dep: fast-xml-parser
-│   │   └── src/
-│   │       ├── types.ts          # IR (Cell/Page/Diagram + specs)
-│   │       ├── colors.ts         # role/lane color palette + assignment
-│   │       ├── styles.ts         # named shape/edge → mxGraph style strings
-│   │       ├── serialize.ts      # IR → .drawio XML
-│   │       ├── parse.ts          # .drawio XML → IR (compressed diagrams too)
-│   │       ├── layout.ts         # built-in layered layout
-│   │       ├── cli.ts            # drawio desktop CLI detection/export/layout/open
-│   │       └── engine.ts         # high-level ops shared by tools
-│   └── skills/drawio-diagrams/   # skill: how to color roles & swimlanes
-│       └── SKILL.md
-├── test/smoke.ts                 # end-to-end smoke test
-└── package.json
-```
-
 ## Install
 
-The extension already lives in `.pi/extensions/drawio/`, so it loads
-automatically when Pi runs inside this repo (after project trust). The skill in
-`.pi/skills/drawio-diagrams/` is discovered the same way.
+### From npm (after publishing)
 
-### Use it in any project (global)
+```bash
+pi install npm:pi-drawio
+```
 
-Symlink the extension and skill into your agent directory:
+This installs the extension and its coloring skill as one unit, together with
+its `fast-xml-parser` dependency.
+
+### In this repo (development)
+
+The extension lives in `.pi/extensions/drawio/` and the skill in
+`.pi/skills/drawio-diagrams/`, so both are discovered automatically when Pi
+runs inside this repo (after project trust). Install the one runtime
+dependency once:
+
+```bash
+npm install
+```
+
+### Global (symlink)
+
+To use the repo checkout from any project without installing from npm:
 
 ```bash
 mkdir -p ~/.pi/agent/extensions ~/.pi/agent/skills
@@ -59,17 +55,16 @@ ln -s "$(pwd)/.pi/skills/drawio-diagrams" ~/.pi/agent/skills/drawio-diagrams
 
 Restart Pi (or run `/reload`).
 
-### Dependencies
+## Dependencies
 
-```bash
-cd .pi/extensions/drawio && npm install
-```
-
-Only runtime dependency is [`fast-xml-parser`](https://www.npmjs.com/package/fast-xml-parser).
-The draw.io **desktop app** ([diagrams.net](https://www.diagrams.net)) is
-optional but enables PNG/SVG/PDF export and ELK/`libavoid` layout. On macOS it
-is auto-detected at `/Applications/draw.io.app/Contents/MacOS/draw.io`; set
-`DRAWIO_PATH` to override.
+- **`fast-xml-parser`** — the only runtime dependency (declared in
+  `dependencies`, installed automatically by `pi install`).
+- **draw.io desktop app** ([diagrams.net](https://www.diagrams.net)) — optional;
+  enables PNG/SVG/PDF export and ELK/`libavoid` layout. Auto-detected on macOS
+  at `/Applications/draw.io.app/Contents/MacOS/draw.io`; override with
+  `DRAWIO_PATH`.
+- Pi host packages (`@earendil-works/pi-coding-agent`, `@earendil-works/pi-ai`)
+  are declared as `peerDependencies` and provided by Pi itself.
 
 ## Tools
 
@@ -118,11 +113,42 @@ Then read the PNG back to verify.
 See `.pi/skills/drawio-diagrams/SKILL.md` for the full palette and process-flow
 guidance.
 
+## Publishing to npm
+
+Publishing uses **npm Trusted Publishing** (no token stored in the repo) via the
+workflow in `.github/workflows/publish.yml`.
+
+One-time setup on npmjs.com:
+
+1. Create the package (or claim it) on npm.
+2. Go to the package → **Settings → Publishing access**.
+3. Enable **"Require two-factor authentication or automation"**.
+4. Under **Trusted Publishing**, add: owner=`Lauritz30`, repo=`pi-drawio`,
+   workflow path=`.github/workflows/publish.yml`.
+
+Then cut a GitHub release (or run the workflow manually). The workflow runs
+`npm publish --provenance --access public`, with provenance proving the build
+came from this repo.
+
+## Layout
+
+```
+pi-drawio/
+├── package.json               # npm package: name, `pi` manifest, deps
+├── .pi/
+│   ├── extensions/drawio/     # extension (index.ts + src/)
+│   └── skills/drawio-diagrams/  # coloring skill (SKILL.md)
+├── .github/workflows/publish.yml
+├── test/smoke.ts              # end-to-end smoke test
+├── LICENSE
+└── README.md
+```
+
 ## Development
 
 ```bash
-cd .pi/extensions/drawio && npm install   # install fast-xml-parser
-node test/smoke.ts                         # create → parse → compress round-trip
+npm install        # install fast-xml-parser
+npm test           # node test/smoke.ts  (create → parse → compressed round-trip)
 ```
 
 ## Limitations (v1)
